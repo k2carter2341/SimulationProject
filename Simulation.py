@@ -135,7 +135,7 @@ for i in range(1000):
         
 # plotting a graph 
 plt.plot(dr) 
-plt.show()``
+plt.show()
 
 
 #BELOW IS THE CODE FROM THE TEXTBOOK AND MY NOTES DISECTING IT
