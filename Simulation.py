@@ -1,72 +1,104 @@
 import random
+from statistics import variance
 from turtle import distance
 import numpy as np
 import matplotlib.pyplot as plt
 
-N = 100  # number of cells
-minDistance = 0.8 # the minimum distance each 
+N = 1000  # number of cells
 rho = 0.8  # density
-# vol = rho/N
-L = np.power(N / rho, 1 / 3)  # length of the simulation
-print("L is", L)
+vol = N/rho # volume
+L = np.power(vol, 1 / 3)  # length of the simulation
+print("L = ", L)
 
+minDist = 0.8 # the minimum distance each 
+iseed = 10
 
+random.seed(iseed)
+#--------------------------------------------------------------------------
+#  generate 3 random numbers between 0 and L
+#--------------------------------------------------------------------------
 def x_rand(L):
     x = random.uniform(0, L)
     y = random.uniform(0, L)
     z = random.uniform(0, L)
     return x, y, z
 
-"""Actual x, y, z"""
+""" Initialize array x, y, z"""
 x = np.zeros(N)
 y = np.zeros(N)
 z = np.zeros(N)
-"""Trial x, y, z"""
-x_t = np.zeros(N)
-y_t = np.zeros(N)
-z_t = np.zeros(N)
 
+#--------------------------------------------------------------------------
+#  function to generate randomc ocnfiguration s.t. distance between 2 particles > minDist
+#--------------------------------------------------------------------------
+def InitConf(minDist):
+    x[0], y[0], z[0] = x_rand(L) # choose an arbitrary position for the very 1st particle
+    i = 0
+    while i < N:
+            x_t, y_t, z_t = x_rand(L) # trial position
+            iflag = 1 # flag for accepting trial position in x, y, z list if dist > minDist
+            for j in range(i): # look for all possible pairs
+                dx = x[j] - x_t
+                dx = dx - L * np.round(dx/L) # minimun image distance
 
-def distanceLoop():
-    for i in range(N):
-        x_t[i], y_t[i], z_t[i] = x_rand(L)
-        #print("x_t is ", x_t)
-        if i > 0:
-            for j in range(i):
-                """d_x,y,z are all place holders equations to find dx,dy,dz"""
-                d_x = x[i] - x_t
-                dx = d_x - L * np.round(d_x/L)
-                #print("np.round(d_x)/L =", np.round(d_x/L))
-                #print("d_x is: ", d_x)
-                #print("dx is :", dx)
-                d_y = y[i] - y_t
-                dy = d_y - L * np.round(d_y/L)
-                d_z = z[i] - z_t
-                dz = d_z - L * np.round(d_z/L)
-                distance = dx**2 + dy**2 + dz**2
-                #print("distance is ", distance)
-                if distance.any() < 0.8:
-                    x_rand()
-                else:
-                    x[i] = x_t[i]
-                    y[i] = y_t[i]
-                    z[i] = z_t[i]
+                dy = y[j] - y_t
+                dy = dy - L * np.round(dy/L)
 
+                dz = z[j] - z_t
+                dz = dz - L * np.round(dz/L)
 
-def cell_loop():
-    for i in range(N):
-        x[i], y[i], z[i] = x_rand(L)
-    #print("x is :", x)
-    distanceLoop()
+                dr2 = dx**2 + dy**2 + dz**2
+                if(dr2 < minDist*minDist):
+                    iflag = 0 # iflag=0 means don't accept the trial position: see later lines
+                    break
+            if(iflag==1): # this line will reach (i) by above break statement or (ii) after finishing above for loop
+                x[i] = x_t; y[i] = y_t; z[i] = z_t; i = i + 1
 
+#--------------------------------------------------------------------------
+#  function to calculate distance of 2 particles (x1,y1,z1) and (x2,y2,z2)
+#--------------------------------------------------------------------------
+def dist(x1, y1, z1, x2, y2, z2, Lx, Ly, Lz):   #Use these variables in gaussian def
+    dx = x1 - x2
+    dx = dx - Lx * np.round(dx/Lx) # minimum image distance
 
+    dy = y1 - y2
+    dy = dy - Ly * np.round(dy/Ly)
 
-#distanceLoop()
+    dz = z1 - z2
+    dz = dz - Lz * np.round(dz/Lz)
 
-cell_loop()
+    dr2 = dx**2 + dy**2 + dz**2
+    dr = np.sqrt(dr2)
 
-print(x, y, z)
+    return dr
+#=========================================================================
+#=========================================================================
+#  MAIN fnction to call all functiona as required
+#=========================================================================
+#=========================================================================
 
+InitConf(minDist) # calling function to generate initial configuration
+
+# Call dist() to calculate all the diatances. Just for checking 
+fp = open("dist.txt", mode="w")
+npair = int(N*(N-1)/2)
+print(" \n")
+print("npair= %s" %(npair))
+
+r = np.zeros(npair)
+index = np.zeros(npair)
+ind = -1
+for i in range(N):
+    for j in range(i+1, N, 1):
+        ind = ind + 1
+        r1 = dist(x[i], y[i], z[i], x[j], y[j], z[j], L, L, L)
+        r[ind] = r1
+        fp.write("%s  %s\n" %(ind, r[ind]))
+        index[ind] = ind 
+fp.close()
+#--------------------------------------------------------------------------
+# Plot scattered plot
+#--------------------------------------------------------------------------
 fp = open("point.txt", mode="w")
 for i in range(N):
     line = str(x[i]) + " " + str(y[i]) + " " + str(z[i])
@@ -78,3 +110,59 @@ ax = plt.axes(projection='3d')
 
 ax.scatter3D(x, y, z)
 plt.show()
+#--------------------------------------------------------------------------
+# Plot distances among all particles
+#--------------------------------------------------------------------------
+fig = plt.figure()
+plt.plot(index, r, "o")
+plt.axhline(y=minDist, color='r', linestyle='--')
+plt.show()
+
+#my attempt at gaussian distribution
+#figure out theory of:joint propability distribution, jacobian determinant and jacobian matrix khan academy, box-muller method -- this should all go into theory section***
+
+#Uses the module? to find distribution... but not sure how this gets us to velocities just quite yet
+#def gaussian(x1, y1, z1, x2, y2, z2)
+
+#Dont think this gives me what i want
+mu = 100
+sigma = 50
+dr = []
+    
+for i in range(1000): 
+    temp = random.gauss(mu, sigma)
+    dr.append(temp) 
+        
+# plotting a graph 
+plt.plot(dr) 
+plt.show()``
+
+
+#BELOW IS THE CODE FROM THE TEXTBOOK AND MY NOTES DISECTING IT
+# Start of the function: FUNCTION gasdev(idum)
+#I think this is a comment in the book?: C USES ran1
+# INTEGER idum
+# REAL gasdev
+# Returns a normally distributed deviate with zero mean and unit variance, using ran1(idum)
+# as the source of uniform deviates.
+#  variable type: INTEGER iset   
+# variable type floating: REAL fac,gset,rsq,v1,v2,ran1  
+# Stores return variable: SAVE iset,gset  
+# Like lists: DATA iset/0/
+# same as java and python: if (idum.lt.0) iset=0 Reinitialize. 
+# same as java and python: if (iset.eq.0) then We don’t have an extra deviate handy, so
+# 1 v1=2.*ran1(idum)-1. pick two uniform numbers in the square extendv2=2.*ran1(idum)-1. ing from -1 to +1 in each direction,
+# rsq=v1**2+v2**2 see if they are in the unit circle,
+# if(rsq.ge.1..or.rsq.eq.0.)goto 1 and if they are not, try again.
+# fac=sqrt(-2.*log(rsq)/rsq) Now make the Box-Muller transformation to get
+# two normal deviates. Return one and save
+# the other for next time.
+# gset=v1*fac
+# gasdev=v2*fac
+# iset=1 Set flag.
+# else We have an extra deviate handy,
+# gasdev=gset so return it,
+# iset=0 and unset the flag.
+# endif
+# return
+# END
