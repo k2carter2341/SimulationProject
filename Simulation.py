@@ -1,7 +1,9 @@
+from ast import Or
+from cmath import log, sqrt
 import random
 from statistics import variance
 from turtle import distance
-import numpy as np
+import numpy as np                  # DOnt know why numpy and matplotlib must be installed onto vscode again 
 import matplotlib.pyplot as plt
 
 N = 1000  # number of cells
@@ -122,9 +124,40 @@ plt.show()
 #figure out theory of:joint propability distribution, jacobian determinant and jacobian matrix khan academy, box-muller method -- this should all go into theory section***
 
 #Uses the module? to find distribution... but not sure how this gets us to velocities just quite yet
-#def gaussian(x1, y1, z1, x2, y2, z2)
+def gaussianDev(idum):
+    int idum; 
+    float gaussianDev; 
+    int iset = 0; 
+    float fac;      # confused becase when these float variable were together on one line separated by commas only fac was unhappy, but to try to make it happy i also separated the variables in newlines and semicolons
+    float gset; 
+    float rsq;  
+    float v1; 
+    float v2; 
+    float random(0,1)
+    while(iset == False):
+        v1 = 2*random(idum)-1
+        v2 = 2*random(idum)-1 #still have no clue what idum means 
+        rsq = v1**2+v2**2   #Should it be dr^2?
 
-#Dont think this gives me what i want
+        elif(rsq >= True Or rsq == false):  #there is a goto statement in fortran and that doesnt translate to python 
+        fac = sqrt(-2*log(rsq)/rsq) #confused as to why there is an unexpected indentation bc it is an if statement
+        gset = v1*fac
+        gaussianDev = v2*fac
+        iset=True
+
+            else:   #below is the expected expression but if i indent the lines below it is still unhappy
+            gaussianDev = gset
+            iset = False
+        return(gaussianDev)
+# I alos believe referring to the text the function above only yeilds the velocities in one direction, 
+# so we we need to make two more functions for the y and z component? If so does that mean that we dx 
+# instead of dr in this function? dy for y? and dz for z? Is there a way to get the velocity of dr? 
+
+
+
+
+
+#Dont think this gives us what we want
 mu = 100
 sigma = 50
 dr = []
