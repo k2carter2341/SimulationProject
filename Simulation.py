@@ -4,7 +4,7 @@ import random
 from re import T
 from statistics import variance
 from turtle import distance
-import numpy as np                  # DOnt know why numpy and matplotlib must be installed onto vscode again 
+import numpy as np                   
 import matplotlib.pyplot as plt
 
 N = 100  # number of cells
@@ -27,6 +27,12 @@ T = 1
 size = int((N * (N-1))/2)
 r = np.zeros(size)
 pot = np.zeros(size)
+
+steps = 100 #how many steps 
+deltaT = 0.005
+kb = (1.38064852e-23)       #this is 1.381 * 10**-23 refer to power check
+K=1 # for temperature control
+m = 0.0001  #temporary 
 
 minDist = 0.9 # the minimum distance each 
 iseed = 10
@@ -90,7 +96,7 @@ def Force(u):
                 
     fp.close()
     return u/N
-    print(u)
+    #print(u) -- figure this out
 
 
 
@@ -157,6 +163,12 @@ def dist(x1, y1, z1, x2, y2, z2, Lx, Ly, Lz):   #Use these variables in gaussian
 #=========================================================================
 #=========================================================================
 
+Initial_pos();      #unsure/dont know what variable you named the initial positions and velocities under or where
+Initial_velocity();     
+Force();            #not sure if this is the old force or new force??
+Fxold=Fx[i];Fyold=Fy[i]; Fzold=Fz[i];   
+for i in range(steps):      #We just decide how many steps we want --> made a variable so we can change it in one place
+
 mu = 0
 sigma = np.sqrt(T)
 vx = np.zeros(N)
@@ -164,7 +176,7 @@ vy = np.zeros(N)
 vz = np.zeros(N)
     
 for i in range(N): 
-    temp = random.gauss(mu, sigma)
+    temp = random.gauss(mu, sigma)      # is this the force? 
     temp2 = random.gauss(mu, sigma)
     temp3 = random.gauss(mu, sigma)
     vx[i] = temp
@@ -231,7 +243,7 @@ print(value)
 plt.figure()
 plt.plot(r, pot, "o")
 plt.show()
-exit() 
+#exit()
 # Call dist() to calculate all the diatances. Just for checking 
 fp = open("dist.txt", mode="w")
 npair = int(N*(N-1)/2)
@@ -271,44 +283,8 @@ plt.plot(index, r, "o")
 plt.axhline(y=minDist, color='r', linestyle='--')
 plt.show()
 
-#my attempt at gaussian distribution
-#figure out theory of:joint propability distribution, jacobian determinant and jacobian matrix khan academy, box-muller method -- this should all go into theory section***
 
-#Uses the module? to find distribution... but not sure how this gets us to velocities just quite yet
-#def gaussianDev(idum):
-   # int idum; 
-  #  float gaussianDev; 
-  #  int iset = 0; 
-    #float fac;      # confused becase when these float variable were together on one line separated by commas only fac was unhappy, but to try to make it happy i also separated the variables in newlines and semicolons
-   # float gset; 
-  #  float rsq;  
- #   float v1; 
-#   # float v2; 
-  #  float random(0,1)
- #   while(iset == False):
-#        v1 = 2*random(idum)-1
-       # v2 = 2*random(idum)-1 #still have no clue what idum means 
-      #  rsq = v1**2+v2**2   #Should it be dr^2?
-
-     #   elif(rsq >= True Or rsq == false):  #there is a goto statement in fortran and that doesnt translate to python 
-    #    fac = sqrt(-2*log(rsq)/rsq) #confused as to why there is an unexpected indentation bc it is an if statement
-   #     gset = v1*fac
-  #      gaussianDev = v2*fac
- #       iset=True
-#
-   #         else:   #below is the expected expression but if i indent the lines below it is still unhappy
-  #          gaussianDev = gset
- #           iset = False
-#        return(gaussianDev)
-# I alos believe referring to the text the function above only yeilds the velocities in one direction, 
-# so we we need to make two more functions for the y and z component? If so does that mean that we dx 
-# instead of dr in this function? dy for y? and dz for z? Is there a way to get the velocity of dr? 
-
-
-
-
-
-#Dont think this gives us what we want
+#Gaussian Distribution
 mu = 0
 sigma = sqrt(T)
 vx = []
@@ -350,32 +326,48 @@ print(UpdatedCoM)
 
 
 print(vxCoM)
+#above is from Friday. An we apparently found the force so not sure how to put this in the defs below
 
-#BELOW IS THE CODE FROM THE TEXTBOOK AND MY NOTES DISECTING IT
-# Start of the function: FUNCTION gasdev(idum)
-#I think this is a comment in the book?: C USES ran1
-# INTEGER idum
-# REAL gasdev
-# Returns a normally distributed deviate with zero mean and unit variance, using ran1(idum)
-# as the source of uniform deviates.
-#  variable type: INTEGER iset   
-# variable type floating: REAL fac,gset,rsq,v1,v2,ran1  
-# Stores return variable: SAVE iset,gset  
-# Like lists: DATA iset/0/
-# same as java and python: if (idum.lt.0) iset=0 Reinitialize. 
-# same as java and python: if (iset.eq.0) then We don’t have an extra deviate handy, so
-# 1 v1=2.*ran1(idum)-1. pick two uniform numbers in the square extendv2=2.*ran1(idum)-1. ing from -1 to +1 in each direction,
-# rsq=v1**2+v2**2 see if they are in the unit circle,
-# if(rsq.ge.1..or.rsq.eq.0.)goto 1 and if they are not, try again.
-# fac=sqrt(-2.*log(rsq)/rsq) Now make the Box-Muller transformation to get
-# two normal deviates. Return one and save
-# the other for next time.
-# gset=v1*fac
-# gasdev=v2*fac
-# iset=1 Set flag.
-# else We have an extra deviate handy,
-# gasdev=gset so return it,
-# iset=0 and unset the flag.
-# endif
-# return
-# END
+#----------------------------------------------------------------------
+# Brute Force/ Velocity Verlet Alg.
+#----------------------------------------------------------------------
+def Integration():
+    # this find the position of the particles when the force acts upon it
+    Force();    
+    for i in range(N):
+        # the positions are being overridden in each component
+        x[i]= x[i] + vx[i]*deltaT + (1/2)*(Fxold[i]/m)*(deltaT*deltaT)    
+        y[i]= y[i] + vy[i]*deltaT + (1/2)*(Fyold[i]/m)*(deltaT*deltaT)   
+        z[i]= z[i] + vz[i]*deltaT + (1/2)*(Fzold[i]/m)*(deltaT*deltaT)
+
+    Force();    
+
+    for i in range(N):
+        vx[i] = vx[i] + ((Fxold[i]+Fx[i])/2*m)*(deltaT*deltaT)       # the velocities are being overridden in each component
+        vy[i] = vy[i] + ((Fyold[i]+Fy[i])/2*m)*(deltaT*deltaT)       #the velocities are being overridden
+        vz[i] = vz[i] + ((Fzold[i]+Fz[i])/2*m)*(deltaT*deltaT)     #dont know why an error show up with the () because they are closed
+
+#This will be used in Temperature control def
+#Kinetic energy = (1/2)mv^2
+def KE():
+    sum = 0.0
+    for i in range(N):
+        sum = sum + (1/2)*m[i]*vx[i]*vx[i]               #we have a problem with m because we dont have mass initialized yet
+        sum = sum + (1/2)*m[i]*vy[i]*vy[i]
+        sum = sum + (1/2)*m[i]*vz[i]*vz[i]
+        
+
+#---------------------
+#Temperature Control -- since the particels are moving the velocities are scaling (T is directly proportional to v^2) if we dont do this we wont know the temperature and cant keep it fixed. It will be an E, V, N simulation
+#---------------------
+def velscaling():
+    #KE(K) 
+    #K=(3N-4)(1/2)kbT   (3N-4) comes from degrees of freedom and maing sure that the plots dont shift
+    Tk = (2*K)/(kb*(3*N-4))     #kb is the boltzmann constant
+
+    #simulation for temperature=T0
+    fact = sqrt(T0/Tk)      #sorry forget what T0 is 
+    for i in range(N):
+        vx[i]=vx[i]*fact
+        vy[i]=vy[i]*fact
+        vz[i]=vz[i]*fact
